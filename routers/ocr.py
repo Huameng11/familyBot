@@ -2,13 +2,13 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from openai import AsyncOpenAI
 import base64
 import os
-
+from config import AGNES_API_KEY, AGNES_BASE_URL
 router = APIRouter(tags=["Agnes OCR"])
 
 # 实例化 Agnes 的客户端
 client = AsyncOpenAI(
-    api_key=os.getenv("AGNES_API_KEY"),
-    base_url=os.getenv("AGNES_BASE_URL", "https://apihub.agnes-ai.com/v1")
+    api_key=AGNES_API_KEY,
+    base_url=AGNES_BASE_URL
 )
 
 @router.post("/api/parse_instruction")

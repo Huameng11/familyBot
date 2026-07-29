@@ -7,5 +7,8 @@ load_dotenv()
 API_KEY = os.getenv("FAMILYBOT_API_KEY")
 BASE_URL = os.getenv("FAMILYBOT_BASE_URL", "https://open.bigmodel.cn/api/paas/v4/")
 MODEL_NAME = os.getenv("FAMILYBOT_MODEL_NAME", "glm-4-flash")
+#图片识别模型
+AGNES_API_KEY = os.getenv("AGNES_API_KEY", API_KEY)  # 如果没单独配，默认复用主 Key
+AGNES_BASE_URL = os.getenv("AGNES_BASE_URL", "https://apihub.agnes-ai.com/v1")
 # Windows 本地开发建议直接在项目根目录下生成 db
 DB_PATH = os.getenv("FAMILYBOT_DB_PATH", "medicine.db")
