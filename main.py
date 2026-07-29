@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from database import init_db
-from routers import chat, medicine, storage, memo # 导入 memo
+from routers import chat, medicine, storage, memo, ocr # 导入 memo
 
 app = FastAPI(title="FamilyBot - 家庭管家核心引擎")
 
@@ -14,6 +14,7 @@ app.include_router(chat.router)
 app.include_router(medicine.router)
 app.include_router(storage.router)
 app.include_router(memo.router) # 包含备忘录路由
+app.include_router(ocr.router)
 
 @app.get("/")
 async def read_root():
