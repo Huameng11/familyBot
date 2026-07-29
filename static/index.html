@@ -6,16 +6,17 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#3F51B5">
   <title>FamilyBot 家庭管家</title>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     html, body { height: 100%; margin: 0; overflow: hidden; background: #f5f6f9; }
     #app { display: flex; flex-direction: column; height: 100%; }
     
-    header { background: #3F51B5; color: white; padding: 14px; text-align: center; font-size: 18px; font-weight: bold; flex-shrink: 0; z-index: 10; }
+    header { background: #3F51B5; color: white; padding: 14px; text-align: center; font-size: 18px; font-weight: bold; flex-shrink: 0; z-index: 10; display: flex; justify-content: center; align-items: center; gap: 10px; }
+    .offline-badge { background: #FF9800; color: white; font-size: 11px; padding: 2px 6px; border-radius: 10px; font-weight: normal; }
+    
     .content-section { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     
-    /* 聊天样式 */
     #chat-box { padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }
     .msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; word-wrap: break-word; }
     .bot { background: white; align-self: flex-start; color: #333; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-bottom-left-radius: 2px; }
@@ -30,7 +31,6 @@
     .voice-btn { background: #ff9800; border-radius: 50%; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border:none; color:white; flex-shrink: 0; }
     .loading { align-self: flex-start; color: #888; font-size: 13px; margin-left: 5px; }
 
-    /* 表单与卡片 */
     .manager-padding { padding: 15px 15px 80px 15px; } 
     .card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
     .card h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px; }
@@ -40,17 +40,15 @@
     .item-card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
     .med-border { border-left: 5px solid #4CAF50; }
     .storage-border { border-left: 5px solid #FF9800; }
-    .memo-border { border-left: 5px solid #9C27B0; } /* 备忘录专属紫色边框 */
+    .memo-border { border-left: 5px solid #9C27B0; }
     
     .item-card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
     .item-title-input { font-weight: bold; font-size: 16px; border: none; background: none; flex: 1; outline: none; padding: 4px 0; color: #222; }
     .action-btns { display: flex; gap: 6px; }
     
-    /* 文本域调整 */
     textarea { border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; resize: vertical; background: #fafafa; width: 100%; }
     textarea:focus { border-color: #9C27B0; background: #fff; }
 
-    /* 底部 Tab 导航，平分 4 个按钮 */
     .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: white; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
     .nav-item { background: none; border: none; flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #757575; font-size: 11px; cursor: pointer; }
     .nav-item.active { color: #3F51B5; font-weight: bold; }
@@ -59,14 +57,17 @@
 </head>
 <body>
 <div id="app">
-  <header>{{ headerTitle }}</header>
+  <header>
+    {{ headerTitle }}
+    <span v-if="isOffline" class="offline-badge">✈️ 离线模式 (待同步: {{ offlineQueue.length }})</span>
+  </header>
 
   <div v-show="currentTab === 'home'" class="content-section">
     <div id="chat-box" ref="chatBox">
       <div v-for="(msg, index) in chatHistory" :key="index" :class="['msg', msg.role]">
         {{ msg.text }}
       </div>
-      <div v-if="isThinking" class="loading">大管家正在检索数据库...</div>
+      <div v-if="isThinking" class="loading">大管家正在思考中...</div>
     </div>
     <div class="input-area">
       <button class="voice-btn" @click="startVoice">{{ isRecording ? '🎙️' : '🎤' }}</button>
@@ -79,27 +80,27 @@
     <div class="card">
       <h3>➕ 录入新药品</h3>
       <div class="form-group"><label>药品名称 *</label><input type="text" v-model="newMed.name" placeholder="如：布洛芬"></div>
-      <div class="form-group"><label>数量 / 规格</label><input type="text" v-model="newMed.count" placeholder="如：2板"></div>
-      <div class="form-group"><label>存放位置</label><input type="text" v-model="newMed.location" placeholder="如：儿童房吊柜左小"></div>
-      <div class="form-group"><label>有效期</label><input type="text" v-model="newMed.expire_date" placeholder="如：2028/8/4"></div>
-      <div class="form-group"><label>用法用量</label><input type="text" v-model="newMed.usage" placeholder="如：一日2次"></div>
-      <button class="btn" style="width:100%; background:#4CAF50;" @click="addMedicine">保存到药箱</button>
+      <div class="form-group"><label>数量 / 规格</label><input type="text" v-model="newMed.count"></div>
+      <div class="form-group"><label>存放位置</label><input type="text" v-model="newMed.location"></div>
+      <div class="form-group"><label>有效期</label><input type="text" v-model="newMed.expire_date"></div>
+      <div class="form-group"><label>用法用量</label><input type="text" v-model="newMed.usage"></div>
+      <button class="btn" style="width:100%; background:#4CAF50;" @click="executeWrite('/api/add_medicine', newMed, 'medList')">保存</button>
     </div>
     <div class="card">
       <h3>📋 药箱库存</h3>
       <div v-if="medList.length === 0" style="text-align:center;color:#999;font-size:13px;">暂无数据</div>
-      <div v-for="med in medList" :key="med.id" class="item-card med-border">
+      <div v-for="item in medList" :key="item.id" class="item-card med-border">
         <div class="item-card-header">
-          <input type="text" v-model="med.name" class="item-title-input">
+          <input type="text" v-model="item.name" class="item-title-input">
           <div class="action-btns">
-            <button class="btn" style="background:#f44336;padding:6px 12px;font-size:13px;" @click="deleteMedicine(med.id)">删除</button>
-            <button class="btn" style="background:#2196F3;padding:6px 12px;font-size:13px;" @click="updateMedicine(med)">保存</button>
+            <button class="btn" style="background:#f44336;padding:6px 12px;font-size:13px;" @click="executeDelete('/api/delete_medicine', item.id, 'medList')">删除</button>
+            <button class="btn" style="background:#2196F3;padding:6px 12px;font-size:13px;" @click="executeWrite('/api/update_medicine', item, 'medList', true)">保存</button>
           </div>
         </div>
-        <div class="form-group"><label>数量/规格</label><input type="text" v-model="med.count"></div>
-        <div class="form-group"><label>存放位置</label><input type="text" v-model="med.location"></div>
-        <div class="form-group"><label>有效期</label><input type="text" v-model="med.expire_date"></div>
-        <div class="form-group"><label>用法用量</label><input type="text" v-model="med.usage"></div>
+        <div class="form-group"><label>数量/规格</label><input type="text" v-model="item.count"></div>
+        <div class="form-group"><label>存放位置</label><input type="text" v-model="item.location"></div>
+        <div class="form-group"><label>有效期</label><input type="text" v-model="item.expire_date"></div>
+        <div class="form-group"><label>用法用量</label><input type="text" v-model="item.usage"></div>
       </div>
     </div>
   </div>
@@ -107,12 +108,12 @@
   <div v-show="currentTab === 'storage'" class="content-section manager-padding">
     <div class="card">
       <h3>➕ 录入新物资</h3>
-      <div class="form-group"><label>物品名称 *</label><input type="text" v-model="newStorage.item_name" placeholder="如：维达抽纸"></div>
-      <div class="form-group"><label>分类</label><input type="text" v-model="newStorage.category" placeholder="如：日用百货"></div>
-      <div class="form-group"><label>数量 / 规格</label><input type="text" v-model="newStorage.quantity" placeholder="如：1箱"></div>
-      <div class="form-group"><label>存放位置</label><input type="text" v-model="newStorage.location" placeholder="如：主卧榻榻米下"></div>
+      <div class="form-group"><label>物品名称 *</label><input type="text" v-model="newStorage.item_name"></div>
+      <div class="form-group"><label>分类</label><input type="text" v-model="newStorage.category"></div>
+      <div class="form-group"><label>数量 / 规格</label><input type="text" v-model="newStorage.quantity"></div>
+      <div class="form-group"><label>存放位置</label><input type="text" v-model="newStorage.location"></div>
       <div class="form-group"><label>备注说明</label><input type="text" v-model="newStorage.remark"></div>
-      <button class="btn" style="width:100%; background:#FF9800;" @click="addStorage">保存到仓库</button>
+      <button class="btn" style="width:100%; background:#FF9800;" @click="executeWrite('/api/add_storage', newStorage, 'storageList')">保存</button>
     </div>
     <div class="card">
       <h3>📋 仓库库存</h3>
@@ -121,8 +122,8 @@
         <div class="item-card-header">
           <input type="text" v-model="item.item_name" class="item-title-input">
           <div class="action-btns">
-            <button class="btn" style="background:#f44336;padding:6px 12px;font-size:13px;" @click="deleteStorage(item.id)">删除</button>
-            <button class="btn" style="background:#FF9800;padding:6px 12px;font-size:13px;" @click="updateStorage(item)">保存</button>
+            <button class="btn" style="background:#f44336;padding:6px 12px;font-size:13px;" @click="executeDelete('/api/delete_storage', item.id, 'storageList')">删除</button>
+            <button class="btn" style="background:#FF9800;padding:6px 12px;font-size:13px;" @click="executeWrite('/api/update_storage', item, 'storageList', true)">保存</button>
           </div>
         </div>
         <div class="form-group"><label>分类</label><input type="text" v-model="item.category"></div>
@@ -136,22 +137,22 @@
   <div v-show="currentTab === 'memo'" class="content-section manager-padding">
     <div class="card">
       <h3>➕ 新增备忘条目</h3>
-      <div class="form-group"><label>备忘主题 / 问题 *</label><input type="text" v-model="newMemo.title" placeholder="如：燃气缴费户号、宽带密码"></div>
-      <div class="form-group"><label>详细记录内容</label><textarea v-model="newMemo.content" rows="3" placeholder="在这里输入详细需要记住的信息..."></textarea></div>
-      <button class="btn" style="width:100%; background:#9C27B0;" @click="addMemo">保存到备忘录</button>
+      <div class="form-group"><label>备忘主题 / 问题 *</label><input type="text" v-model="newMemo.title"></div>
+      <div class="form-group"><label>详细记录内容</label><textarea v-model="newMemo.content" rows="3"></textarea></div>
+      <button class="btn" style="width:100%; background:#9C27B0;" @click="executeWrite('/api/add_memo', newMemo, 'memoList')">保存</button>
     </div>
     <div class="card">
       <h3>📋 备忘历史记录</h3>
-      <div v-if="memoList.length === 0" style="text-align:center;color:#999;font-size:13px;">暂无备忘数据</div>
-      <div v-for="memo in memoList" :key="memo.id" class="item-card memo-border">
+      <div v-if="memoList.length === 0" style="text-align:center;color:#999;font-size:13px;">暂无数据</div>
+      <div v-for="item in memoList" :key="item.id" class="item-card memo-border">
         <div class="item-card-header">
-          <input type="text" v-model="memo.title" class="item-title-input">
+          <input type="text" v-model="item.title" class="item-title-input">
           <div class="action-btns">
-            <button class="btn" style="background:#f44336;padding:6px 12px;font-size:13px;" @click="deleteMemo(memo.id)">删除</button>
-            <button class="btn" style="background:#9C27B0;padding:6px 12px;font-size:13px;" @click="updateMemo(memo)">保存</button>
+            <button class="btn" style="background:#f44336;padding:6px 12px;font-size:13px;" @click="executeDelete('/api/delete_memo', item.id, 'memoList')">删除</button>
+            <button class="btn" style="background:#9C27B0;padding:6px 12px;font-size:13px;" @click="executeWrite('/api/update_memo', item, 'memoList', true)">保存</button>
           </div>
         </div>
-        <div class="form-group"><label>详细内容</label><textarea v-model="memo.content" rows="3"></textarea></div>
+        <div class="form-group"><label>详细内容</label><textarea v-model="item.content" rows="3"></textarea></div>
       </div>
     </div>
   </div>
@@ -166,7 +167,7 @@
     <button :class="['nav-item', {active: currentTab==='storage'}]" @click="switchTab('storage', '📦 家庭仓库')">
       <span class="nav-icon">📦</span><span>家庭仓库</span>
     </button>
-    <button :class="['nav-item', {active: currentTab==='memo'}]" @click="switchTab('memo', '📝 家庭备忘录')">
+    <button :class="['nav-item', {active: currentTab==='memo'}]" @click="switchTab('memo', '📝 家庭备忘')">
       <span class="nav-icon">📝</span><span>家庭备忘</span>
     </button>
   </nav>
@@ -174,18 +175,33 @@
 
 <script>
   const { createApp } = Vue;
+
+  // 带超时的 Fetch 封装（2.5秒连不上就判定为离线）
+  const fetchWithTimeout = async (url, options = {}, timeout = 2500) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return response;
+  };
+
   createApp({
     data() {
       return {
         headerTitle: '🏠 FamilyBot 家庭管家',
         currentTab: 'home',
-        chatHistory: [{ role: 'bot', text: '欢迎回来！我是你的家庭超级管家 FamilyBot。' }],
+        isOffline: false,
+        offlineQueue: JSON.parse(localStorage.getItem('familybot_queue') || '[]'),
+        
+        chatHistory: [{ role: 'bot', text: '欢迎回来！无论在家还是外出，我都在这里为你服务。' }],
         userInput: '',
         isThinking: false,
         isRecording: false,
-        medList: [],
-        storageList: [],
-        memoList: [],
+        
+        medList: JSON.parse(localStorage.getItem('familybot_medList') || '[]'),
+        storageList: JSON.parse(localStorage.getItem('familybot_storageList') || '[]'),
+        memoList: JSON.parse(localStorage.getItem('familybot_memoList') || '[]'),
+        
         newMed: { name: '', count: '', location: '', expire_date: '', usage: '' },
         newStorage: { item_name: '', category: '', quantity: '', location: '', remark: '' },
         newMemo: { title: '', content: '' }
@@ -195,102 +211,143 @@
       switchTab(tab, title) {
         this.currentTab = tab;
         this.headerTitle = title;
-        if(tab === 'medicine') this.fetchData('/api/medicines', 'medList');
-        if(tab === 'storage') this.fetchData('/api/storage', 'storageList');
-        if(tab === 'memo') this.fetchData('/api/memos', 'memoList');
       },
+      
+      // 🚀 核心：同步待办队列
+      async syncQueue() {
+        if (this.offlineQueue.length === 0) return;
+        let successCount = 0;
+        
+        for (let i = 0; i < this.offlineQueue.length; i++) {
+          try {
+            await fetchWithTimeout(this.offlineQueue[i].url, { method: 'POST' });
+            successCount++;
+          } catch (e) {
+            break; // 一旦失败说明还是离线，停止同步
+          }
+        }
+        
+        if (successCount > 0) {
+          this.offlineQueue.splice(0, successCount);
+          localStorage.setItem('familybot_queue', JSON.stringify(this.offlineQueue));
+          // 同步成功后，全面拉取一次最新数据
+          this.fetchAllData(); 
+        }
+      },
+
+      // 🚀 核心：拉取数据（支持离线快照）
+      async fetchData(url, targetVar) {
+        try {
+          const res = await fetchWithTimeout(url);
+          const data = await res.json();
+          if (data.status === 'success') {
+            this[targetVar] = data.data;
+            // 存入本地缓存
+            localStorage.setItem(`familybot_${targetVar}`, JSON.stringify(data.data));
+            
+            if (this.isOffline) {
+              this.isOffline = false;
+              this.syncQueue(); // 恢复网络时触发同步
+            }
+          }
+        } catch (e) {
+          this.isOffline = true;
+          // 离线时无需报错，页面会自动使用 data() 初始化时读入的 localStorage 缓存
+        }
+      },
+      
+      async fetchAllData() {
+        await this.fetchData('/api/medicines', 'medList');
+        await this.fetchData('/api/storage', 'storageList');
+        await this.fetchData('/api/memos', 'memoList');
+      },
+
+      // 🚀 核心：统一处理写入操作（Add / Update）
+      async executeWrite(baseUrl, payload, targetVar, isUpdate = false) {
+        // 基本非空校验
+        const firstKey = Object.keys(payload)[0];
+        if (firstKey !== 'id' && !payload[firstKey]) return alert('请填写必填项(名称/主题)！');
+        
+        const params = new URLSearchParams(payload).toString();
+        const fullUrl = `${baseUrl}?${params}`;
+
+        try {
+          await fetchWithTimeout(fullUrl, { method: 'POST' });
+          if(this.isOffline) { this.isOffline = false; this.syncQueue(); }
+          alert(isUpdate ? '修改成功' : '录入成功');
+        } catch (e) {
+          this.isOffline = true;
+          // 存入离线队列
+          this.offlineQueue.push({ url: fullUrl });
+          localStorage.setItem('familybot_queue', JSON.stringify(this.offlineQueue));
+          alert('网络未连接。您的操作已保存在手机本地，回家连上WiFi将自动同步！');
+        } finally {
+          // 清空输入框
+          if (!isUpdate) {
+            for(let key in payload) payload[key] = '';
+          }
+          // 不管在线离线，都重新拉取或使用本地模拟更新（这里统一用 fetchData 处理界面重载）
+          this.fetchAllData();
+        }
+      },
+
+      // 🚀 核心：统一处理删除操作
+      async executeDelete(baseUrl, id, targetVar) {
+        if (!confirm('确定要删除这条记录吗？')) return;
+        const fullUrl = `${baseUrl}?id=${id}`;
+        
+        try {
+          await fetchWithTimeout(fullUrl, { method: 'POST' });
+          if(this.isOffline) { this.isOffline = false; this.syncQueue(); }
+        } catch (e) {
+          this.isOffline = true;
+          this.offlineQueue.push({ url: fullUrl });
+          localStorage.setItem('familybot_queue', JSON.stringify(this.offlineQueue));
+          // 乐观更新：在界面上先移掉它
+          this[targetVar] = this[targetVar].filter(item => item.id !== id);
+          localStorage.setItem(`familybot_${targetVar}`, JSON.stringify(this[targetVar]));
+          alert('已在本地标记删除，回家后自动同步。');
+        } finally {
+          this.fetchAllData();
+        }
+      },
+
+      // AI 问答（必须在线才能用，否则提示离线）
       async sendMessage() {
         if (!this.userInput.trim()) return;
         const query = this.userInput;
         this.chatHistory.push({ role: 'user', text: query });
         this.userInput = '';
+
+        if (this.isOffline && this.offlineQueue.length >= 0) {
+           // 粗略判断：如果尝试 fetch 数据失败进入了离线状态，大模型也用不了
+           this.chatHistory.push({ role: 'bot', text: '主人，目前我处于离线模式，无法连接云端大脑进行思考。但您可以正常查看、修改各个模块的数据，回家后我会自动同步。' });
+           this.$nextTick(() => { this.scrollToBottom(); });
+           return;
+        }
+
         this.isThinking = true;
         this.$nextTick(() => { this.scrollToBottom(); });
 
         try {
-          const res = await fetch(`/api/chat?query=${encodeURIComponent(query)}`);
+          const res = await fetchWithTimeout(`/api/chat?query=${encodeURIComponent(query)}`, {}, 15000); // 问答超时给长一点
           const data = await res.json();
           this.chatHistory.push({ role: 'bot', text: data.reply });
         } catch (e) {
-          this.chatHistory.push({ role: 'bot', text: '网络连接失败，请稍后重试。' });
+          this.isOffline = true;
+          this.chatHistory.push({ role: 'bot', text: '大管家当前断网了（处于离线模式），无法回答问题，但您可以继续浏览和编辑本地库存。' });
         } finally {
           this.isThinking = false;
           this.$nextTick(() => { this.scrollToBottom(); });
         }
       },
+
       scrollToBottom() {
         const box = this.$refs.chatBox;
         if(box) box.scrollTop = box.scrollHeight;
       },
-      async fetchData(url, targetVar) {
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          if (data.status === 'success') this[targetVar] = data.data;
-        } catch (e) { console.error("加载数据失败"); }
-      },
-      
-      // --- 药箱方法 ---
-      async addMedicine() {
-        if (!this.newMed.name) return alert('请输入名称');
-        const params = new URLSearchParams(this.newMed).toString();
-        await fetch(`/api/add_medicine?${params}`, { method: 'POST' });
-        this.newMed = { name: '', count: '', location: '', expire_date: '', usage: '' };
-        this.fetchData('/api/medicines', 'medList');
-      },
-      async updateMedicine(med) {
-        const params = new URLSearchParams(med).toString();
-        await fetch(`/api/update_medicine?${params}`, { method: 'POST' });
-        alert('修改成功');
-      },
-      async deleteMedicine(id) {
-        if (confirm('确定要删除这条药品记录吗？')) {
-          await fetch(`/api/delete_medicine?id=${id}`, { method: 'POST' });
-          this.fetchData('/api/medicines', 'medList');
-        }
-      },
 
-      // --- 仓库方法 ---
-      async addStorage() {
-        if (!this.newStorage.item_name) return alert('请输入名称');
-        const params = new URLSearchParams(this.newStorage).toString();
-        await fetch(`/api/add_storage?${params}`, { method: 'POST' });
-        this.newStorage = { item_name: '', category: '', quantity: '', location: '', remark: '' };
-        this.fetchData('/api/storage', 'storageList');
-      },
-      async updateStorage(item) {
-        const params = new URLSearchParams(item).toString();
-        await fetch(`/api/update_storage?${params}`, { method: 'POST' });
-        alert('修改成功');
-      },
-      async deleteStorage(id) {
-        if (confirm('确定要删除这条物资记录吗？')) {
-          await fetch(`/api/delete_storage?id=${id}`, { method: 'POST' });
-          this.fetchData('/api/storage', 'storageList');
-        }
-      },
-
-      // --- 备忘录方法 ---
-      async addMemo() {
-        if (!this.newMemo.title) return alert('请输入主题描述');
-        const params = new URLSearchParams(this.newMemo).toString();
-        await fetch(`/api/add_memo?${params}`, { method: 'POST' });
-        this.newMemo = { title: '', content: '' };
-        this.fetchData('/api/memos', 'memoList');
-      },
-      async updateMemo(memo) {
-        const params = new URLSearchParams({ id: memo.id, title: memo.title, content: memo.content }).toString();
-        await fetch(`/api/update_memo?${params}`, { method: 'POST' });
-        alert('备忘录修改成功');
-      },
-      async deleteMemo(id) {
-        if (confirm('确定要删除这条备忘信息吗？')) {
-          await fetch(`/api/delete_memo?id=${id}`, { method: 'POST' });
-          this.fetchData('/api/memos', 'memoList');
-        }
-      },
-
-      // --- 语音识别 ---
+      // 语音识别
       startVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return alert('您的浏览器不支持语音识别');
@@ -308,11 +365,23 @@
       }
     },
     mounted() {
-      this.fetchData('/api/medicines', 'medList');
-      this.fetchData('/api/storage', 'storageList');
-      this.fetchData('/api/memos', 'memoList');
+      // 启动时并发拉取所有数据，探测网络状态
+      this.fetchAllData();
+      
+      // 每 30 秒在后台偷偷尝试一次数据拉取和同步，保持网络连通感知
+      setInterval(() => {
+        this.fetchAllData();
+      }, 30000);
     }
   }).mount('#app');
+  // 注册 Service Worker，激活离线魔法
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW 注册成功'))
+        .catch(err => console.log('SW 注册失败', err));
+    });
+  }
 </script>
 </body>
 </html>
