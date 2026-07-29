@@ -1,0 +1,47 @@
+* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: #f5f6f9; }
+#app { display: flex; flex-direction: column; height: 100%; }
+
+header { background: #3F51B5; color: white; padding: 14px; text-align: center; font-size: 18px; font-weight: bold; flex-shrink: 0; z-index: 10; }
+.content-section { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* 聊天 */
+#chat-box { padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }
+.msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; word-wrap: break-word; }
+.bot { background: white; align-self: flex-start; color: #333; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-bottom-left-radius: 2px; }
+.user { background: #3F51B5; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+
+.input-area { background: white; padding: 10px; display: flex; gap: 8px; border-top: 1px solid #eee; position: fixed; bottom: 56px; left:0; right:0; z-index: 10; }
+input[type="text"] { border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; width: 100%; background: #fafafa; }
+input[type="text"]:focus { border-color: #3F51B5; background: #fff; }
+.chat-input { border-radius: 20px !important; }
+
+.btn { background: #3F51B5; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; font-weight: bold; }
+.voice-btn { background: #ff9800; border-radius: 50%; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border:none; color:white; flex-shrink: 0; }
+.loading { align-self: flex-start; color: #888; font-size: 13px; margin-left: 5px; }
+
+/* 表单卡片 */
+.manager-padding { padding: 15px 15px 80px 15px; } 
+.card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
+.card h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+.form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 13px; color: #666; font-weight: bold; }
+.form-control { border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; width: 100%; background: #fafafa; }
+.form-control:focus { border-color: #3F51B5; background: #fff; }
+
+.search-input { border: 2px solid #3F51B5; background: #fff; font-size: 14px; font-weight: 500; }
+.item-card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+.med-border { border-left: 5px solid #4CAF50; }
+.storage-border { border-left: 5px solid #FF9800; }
+.memo-border { border-left: 5px solid #9C27B0; }
+.item-card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+.item-title-input { font-weight: bold; font-size: 16px; border: none; background: none; flex: 1; outline: none; padding: 4px 0; color: #222; }
+.action-btns { display: flex; gap: 6px; }
+
+textarea { border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; resize: vertical; background: #fafafa; width: 100%; }
+
+/* 底部 Tab */
+.nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: white; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+.nav-item { background: none; border: none; flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #757575; font-size: 11px; cursor: pointer; }
+.nav-item.active { color: #3F51B5; font-weight: bold; }
+.nav-icon { font-size: 18px; }
