@@ -1,123 +1,142 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4CAF50">
-  <title>家庭智能药箱</title>
+  <meta name="theme-color" content="#3F51B5">
+  <title>FamilyBot 家庭管家</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #f5f6f9; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+    html, body { height: 100%; margin: 0; overflow: hidden; background: #f5f6f9; }
+    body { display: flex; flex-direction: column; }
     
-    header { background: #4CAF50; color: white; padding: 12px 16px 0 16px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .header-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-    .tabs { display: flex; justify-content: center; gap: 20px; }
-    .tab-btn { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 15px; font-weight: bold; padding: 8px 16px; border-bottom: 3px solid transparent; cursor: pointer; }
-    .tab-btn.active { color: white; border-bottom: 3px solid white; }
-
-    .content-section { flex: 1; display: none; flex-direction: column; overflow-y: auto; }
+    /* 顶部固定导航 */
+    header { background: #3F51B5; color: white; padding: 14px; text-align: center; font-size: 18px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 10; }
+    
+    /* 内容区域 */
+    .content-section { flex: 1; display: none; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .content-section.active { display: flex; }
 
-    /* AI 对话样式 */
-    #chat-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+    /* 🏠 管家对话界面样式 */
+    #chat-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }
     .msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; word-wrap: break-word; }
     .bot { background: white; align-self: flex-start; color: #333; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-bottom-left-radius: 2px; }
-    .user { background: #4CAF50; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-    .input-area { background: white; padding: 10px; display: flex; gap: 8px; border-top: 1px solid #eee; }
-    input[type="text"], input[type="date"] { border: 1px solid #ddd; border-radius: 8px; padding: 8px 10px; font-size: 14px; outline: none; width: 100%; }
-    .chat-input { border-radius: 20px !important; }
-    .btn { background: #4CAF50; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; font-weight: bold; }
-    .btn-save { background: #2196F3; }
-    .voice-btn { background: #ff9800; border-radius: 50%; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border:none; color:white;}
+    .user { background: #3F51B5; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+    
+    .input-area { background: white; padding: 10px; display: flex; gap: 8px; border-top: 1px solid #eee; position: fixed; bottom: 56px; left:0; right:0; z-index: 10; }
+    input[type="text"] { border: 1px solid #ddd; border-radius: 20px; padding: 10px 16px; font-size: 15px; outline: none; flex: 1; }
+    .btn { background: #3F51B5; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; font-weight: bold; }
+    .voice-btn { background: #ff9800; border-radius: 50%; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border:none; color:white; flex-shrink: 0; }
     .loading { align-self: flex-start; color: #888; font-size: 13px; margin-left: 5px; }
 
-    /* 管理界面卡片 */
-    .manager-padding { padding: 15px; }
+    /* 📦 药箱与管理界面样式 */
+    .manager-padding { padding: 15px 15px 80px 15px; } 
     .card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
-    .card h3 { margin-top: 0; margin-bottom: 12px; font-size: 16px; color: #333; }
-    .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
-    .form-group label { font-size: 12px; color: #666; font-weight: bold; }
-    .med-list { display: flex; flex-direction: column; gap: 12px; }
+    .card h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px; }
     
-    /* 可编辑列表卡片 */
-    .med-card { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 8px; border-left: 4px solid #4CAF50; }
-    .med-card-header { display: flex; justify-content: space-between; align-items: center; }
-    .med-card-title { font-size: 16px; font-weight: bold; color: #333; flex: 1; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    /* 表单与竖排布局修复 */
+    .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 13px; color: #666; font-weight: bold; }
+    .form-control { border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; width: 100%; background: #fafafa; }
+    .form-control:focus { border-color: #3F51B5; background: #fff; }
+    
+    /* 可编辑药品卡片优化 */
+    .med-card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 10px; border-left: 5px solid #4CAF50; margin-bottom: 15px; }
+    .med-card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+    .med-title-input { font-weight: bold; font-size: 16px; border: none; background: none; flex: 1; outline: none; padding: 4px 0; color: #222; }
+    
+    /* 📱 底部固定导航栏 */
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: white; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .nav-item { background: none; border: none; flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #757575; font-size: 12px; cursor: pointer; }
+    .nav-item.active { color: #3F51B5; font-weight: bold; }
+    .nav-icon { font-size: 20px; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-title">💊 家庭智能药箱</div>
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('chat-tab', this)">🤖 智能问答</button>
-      <button class="tab-btn" onclick="switchTab('manage-tab', this)">📦 药箱管理</button>
-    </div>
-  </header>
 
-  <div id="chat-tab" class="content-section active">
+  <header id="main-header">🏠 FamilyBot 家庭管家</header>
+
+  <div id="tab-home" class="content-section active">
     <div id="chat-box">
-      <div class="msg bot">你好！我是你的家庭药箱管家。你可以问我“胃痛家里有什么药？”或者“肠炎宁片放在哪里？”</div>
+      <div class="msg bot">欢迎回来！我是你的家庭超级管家 FamilyBot。你可以直接向我提问家庭事务，例如“我肚子痛家里有药吗？”、“帮我查一下某个物品的位置”等。</div>
     </div>
     <div class="input-area">
-      <button class="voice-btn" id="voice-btn" title="语音输入">🎤</button>
-      <input type="text" id="user-input" class="chat-input" placeholder="输入或描述你的问题...">
+      <button class="voice-btn" id="voice-btn">🎤</button>
+      <input type="text" id="user-input" placeholder="有事请吩咐大管家...">
       <button class="btn" id="send-btn" style="border-radius:20px;">发送</button>
     </div>
   </div>
 
-  <div id="manage-tab" class="content-section manager-padding">
+  <div id="tab-medicine" class="content-section manager-padding">
     <div class="card">
       <h3>➕ 录入新药品</h3>
       <div class="form-group">
         <label>药品名称 *</label>
-        <input type="text" id="new-name" placeholder="例如：阿莫西林胶囊">
+        <input type="text" id="new-name" class="form-control" placeholder="如：阿莫西林胶囊">
       </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>数量/规格</label>
-          <input type="text" id="new-count" placeholder="例如：1盒 / 2板">
-        </div>
-        <div class="form-group">
-          <label>存放位置</label>
-          <input type="text" id="new-location" placeholder="例如：儿童房吊柜右大">
-        </div>
+      <div class="form-group">
+        <label>数量 / 规格</label>
+        <input type="text" id="new-count" class="form-control" placeholder="如：1盒 / 2板">
       </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>有效期</label>
-          <input type="text" id="new-expiry" placeholder="例如：2028/8/1">
-        </div>
-        <div class="form-group">
-          <label>用法用量</label>
-          <input type="text" id="new-usage" placeholder="例如：一日3次，一次2片">
-        </div>
+      <div class="form-group">
+        <label>存放位置</label>
+        <input type="text" id="new-location" class="form-control" placeholder="如：儿童房吊柜右大">
       </div>
-      <button class="btn" style="width: 100%; margin-top: 8px;" onclick="addMedicine()">保存到药箱</button>
+      <div class="form-group">
+        <label>有效期</label>
+        <input type="text" id="new-expiry" class="form-control" placeholder="如：2028/8/1">
+      </div>
+      <div class="form-group">
+        <label>用法用量</label>
+        <input type="text" id="new-usage" class="form-control" placeholder="如：一日3次，一次2片">
+      </div>
+      <button class="btn" style="width: 100%; margin-top: 5px; padding: 12px; background:#4CAF50;" onclick="addMedicine()">保存到药箱</button>
     </div>
 
     <div class="card">
-      <h3>📋 当前药箱库存（可直接修改属性）</h3>
-      <div id="med-list-container" class="med-list">
-        <div style="text-align: center; color: #999; font-size: 13px;">加载药品数据中...</div>
-      </div>
+      <h3>📋 药箱库存清单</h3>
+      <div id="med-list-container"></div>
     </div>
   </div>
 
-  <script>
-    function switchTab(tabId, btn) {
-      document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      btn.classList.add('active');
+  <div id="tab-more" class="content-section manager-padding">
+    <div class="card" style="text-align: center; padding: 40px 20px;">
+      <div style="font-size: 48px; margin-bottom: 15px;">📦</div>
+      <h3>家庭物资仓库</h3>
+      <p style="color:#777; font-size:14px;">正在加紧建设中... 建成后可在此管理家庭日常百货、纸巾、粮油囤货库存，并支持管家智能检索。</p>
+    </div>
+    <div class="card" style="text-align: center; padding: 40px 20px;">
+      <div style="font-size: 48px; margin-bottom: 15px;">🔒</div>
+      <h3>本地密码管理</h3>
+      <p style="color:#777; font-size:14px;">安全隔离模块筹备中... 绝不上传云端，通过树莓派本地加密存储您的各类账号密码。</p>
+    </div>
+  </div>
 
-      if(tabId === 'manage-tab') {
-        loadMedicines();
-      }
+  <nav class="nav-bar">
+    <button class="nav-item active" onclick="switchModule('tab-home', this, '🏠 FamilyBot 家庭管家')">
+      <span class="nav-icon">🏠</span><span>管家问答</span>
+    </button>
+    <button class="nav-item" onclick="switchModule('tab-medicine', this, '💊 智能药箱管理')">
+      <span class="nav-icon">💊</span><span>智能药箱</span>
+    </button>
+    <button class="nav-item" onclick="switchModule('tab-more', this, '🛠️ 扩展模块')">
+      <span class="nav-icon">🛠️</span><span>更多功能</span>
+    </button>
+  </nav>
+
+  <script>
+    function switchModule(sectionId, btn, title) {
+      document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById(sectionId).classList.add('active');
+      btn.classList.add('active');
+      document.getElementById('main-header').innerText = title;
+
+      if(sectionId === 'tab-medicine') { loadMedicines(); }
     }
 
-    // --- 聊天逻辑 ---
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
 
@@ -132,13 +151,12 @@
     async function sendMessage() {
       const text = userInput.value.trim();
       if (!text) return;
-
       appendMessage(text, 'user');
       userInput.value = '';
 
       const loadingDiv = document.createElement('div');
       loadingDiv.className = 'loading';
-      loadingDiv.innerText = '小管家检索数据库中...';
+      loadingDiv.innerText = '大管家正在思考中...';
       chatBox.appendChild(loadingDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -149,16 +167,16 @@
         appendMessage(data.reply, 'bot');
       } catch (err) {
         chatBox.removeChild(loadingDiv);
-        appendMessage('网络连接失败，请检查树莓派状态。', 'bot');
+        appendMessage('管家开小差了，请稍后重试。', 'bot');
       }
     }
 
     document.getElementById('send-btn').addEventListener('click', sendMessage);
     userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-    // --- 药箱管理与随时编辑逻辑 ---
     async function loadMedicines() {
       const container = document.getElementById('med-list-container');
+      container.innerHTML = '<div style="text-align:center;color:#999;font-size:13px;">拉取库存中...</div>';
       try {
         const res = await fetch('/api/medicines');
         const result = await res.json();
@@ -169,37 +187,33 @@
             card.className = 'med-card';
             card.innerHTML = `
               <div class="med-card-header">
-                <input type="text" id="name-${med.id}" value="${med.name || ''}" class="med-card-title" placeholder="药品名称">
-                <button class="btn btn-save" onclick="updateMedicine(${med.id})">保存修改</button>
+                <input type="text" id="name-${med.id}" value="${med.name || ''}" class="med-title-input" placeholder="药品名称">
+                <button class="btn" style="background:#2196F3;padding:6px 12px;font-size:13px;" onclick="updateMedicine(${med.id})">保存</button>
               </div>
-              <div class="grid-2">
-                <div class="form-group">
-                  <label>数量</label>
-                  <input type="text" id="count-${med.id}" value="${med.count || ''}" placeholder="如：1盒">
-                </div>
-                <div class="form-group">
-                  <label>存放位置</label>
-                  <input type="text" id="location-${med.id}" value="${med.location || ''}" placeholder="如：吊柜右大">
-                </div>
+              <div class="form-group">
+                <label>数量 / 规格</label>
+                <input type="text" id="count-${med.id}" class="form-control" value="${med.count || ''}" placeholder="如：1盒">
               </div>
-              <div class="grid-2">
-                <div class="form-group">
-                  <label>有效期</label>
-                  <input type="text" id="expiry-${med.id}" value="${med.expire_date || ''}" placeholder="如：2028/8/1">
-                </div>
-                <div class="form-group">
-                  <label>用法用量</label>
-                  <input type="text" id="usage-${med.id}" value="${med.usage || ''}" placeholder="如：一次2片，一日3次">
-                </div>
+              <div class="form-group">
+                <label>存放位置</label>
+                <input type="text" id="location-${med.id}" class="form-control" value="${med.location || ''}" placeholder="如：吊柜右大">
+              </div>
+              <div class="form-group">
+                <label>有效期</label>
+                <input type="text" id="expiry-${med.id}" class="form-control" value="${med.expire_date || ''}" placeholder="如：2028/8/1">
+              </div>
+              <div class="form-group">
+                <label>用法用量</label>
+                <input type="text" id="usage-${med.id}" class="form-control" value="${med.usage || ''}" placeholder="如：一次2片，一日3次">
               </div>
             `;
             container.appendChild(card);
           });
         } else {
-          container.innerHTML = '<div style="text-align: center; color: #999; font-size: 13px;">药箱空空如也~</div>';
+          container.innerHTML = '<div style="text-align:center;color:#999;font-size:13px;">暂无药品</div>';
         }
       } catch (err) {
-        container.innerHTML = '<div style="text-align: center; color: red; font-size: 13px;">加载药品列表失败</div>';
+        container.innerHTML = '<div style="text-align:center;color:red;font-size:13px;">加载失败</div>';
       }
     }
 
@@ -209,15 +223,12 @@
       const location = document.getElementById('new-location').value.trim();
       const expiry = document.getElementById('new-expiry').value.trim();
       const usage = document.getElementById('new-usage').value.trim();
-
-      if (!name) { alert('请输入药品名称！'); return; }
-
+      if (!name) { alert('请输入名称'); return; }
       try {
         const url = `/api/add_medicine?name=${encodeURIComponent(name)}&count=${encodeURIComponent(count)}&location=${encodeURIComponent(location)}&expire_date=${encodeURIComponent(expiry)}&usage=${encodeURIComponent(usage)}`;
         const res = await fetch(url, { method: 'POST' });
-        const result = await res.json();
-        if (result.status === 'success') {
-          alert('录入成功！');
+        if ((await res.json()).status === 'success') {
+          alert('录入成功');
           document.getElementById('new-name').value = '';
           document.getElementById('new-count').value = '';
           document.getElementById('new-location').value = '';
@@ -225,49 +236,29 @@
           document.getElementById('new-usage').value = '';
           loadMedicines();
         }
-      } catch (err) {
-        alert('录入失败，请重试');
-      }
+      } catch (err) { alert('录入失败'); }
     }
 
-    // 更新某种药的信息
     async function updateMedicine(id) {
       const name = document.getElementById(`name-${id}`).value.trim();
       const count = document.getElementById(`count-${id}`).value.trim();
       const location = document.getElementById(`location-${id}`).value.trim();
       const expiry = document.getElementById(`expiry-${id}`).value.trim();
       const usage = document.getElementById(`usage-${id}`).value.trim();
-
-      if (!name) { alert('药品名称不能为空！'); return; }
-
       try {
         const url = `/api/update_medicine?id=${id}&name=${encodeURIComponent(name)}&count=${encodeURIComponent(count)}&location=${encodeURIComponent(location)}&expire_date=${encodeURIComponent(expiry)}&usage=${encodeURIComponent(usage)}`;
         const res = await fetch(url, { method: 'POST' });
-        const result = await res.json();
-        if (result.status === 'success') {
-          alert(`“${name}”的信息修改成功！`);
-        }
-      } catch (err) {
-        alert('修改失败，请检查网络');
-      }
+        if ((await res.json()).status === 'success') alert('保存成功');
+      } catch (err) { alert('保存失败'); }
     }
 
-    // 语音识别
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
       recognition.lang = 'zh-CN';
       const voiceBtn = document.getElementById('voice-btn');
-
-      voiceBtn.addEventListener('click', () => {
-        recognition.start();
-        voiceBtn.innerText = '🎙️';
-      });
-      recognition.onresult = (e) => {
-        userInput.value = e.results[0][0].transcript;
-        voiceBtn.innerText = '🎤';
-        sendMessage();
-      };
+      voiceBtn.addEventListener('click', () => { recognition.start(); voiceBtn.innerText = '🎙️'; });
+      recognition.onresult = (e) => { userInput.value = e.results[0][0].transcript; voiceBtn.innerText = '🎤'; sendMessage(); };
       recognition.onerror = () => { voiceBtn.innerText = '🎤'; };
       recognition.onend = () => { voiceBtn.innerText = '🎤'; };
     }
