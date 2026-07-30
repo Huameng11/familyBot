@@ -1,10 +1,10 @@
 export default {
   name: 'ChatTab',
   template: `
-    <div class="content-section">
+    <div class="content-section" ref="scrollContainer">
       <div id="chat-box" ref="chatBox">
         <div v-for="(msg, index) in chatHistory" :key="index" :class="['msg', msg.role]">
-          <div>{{ msg.text }}</div>
+          <div v-html="renderMarkdown(msg.text)" class="markdown-body"></div>
           
           <div v-if="msg.role === 'bot'" style="margin-top: 8px; text-align: right;">
             <button 
@@ -28,14 +28,21 @@ export default {
   `,
   data() {
     return {
-      chatHistory: [{ role: 'bot', text: '欢迎回来！我是你的家庭超级管家 FamilyBot。' }],
+      chatHistory: [{ role: 'bot', text: '欢迎回来！我是你的家庭超级管家 **FamilyBot**。 👋' }],
       userInput: '',
       isThinking: false,
       isRecording: false,
-      speakingIndex: null // 记录当前正在朗读的消息索引
+      speakingIndex: null 
     }
   },
   methods: {
+    // 新增：Markdown 渲染函数
+    renderMarkdown(text) {
+      if (!text) return '';
+      // 使用 marked 库将 md 文本转换为 html，并配置安全渲染
+      return marked.parse(text, { breaks: true, gfm: true });
+    },
+
     async sendMessage() {
       if (!this.userInput.trim()) return;
       const query = this.userInput;
@@ -56,46 +63,45 @@ export default {
       }
     },
 
-    // 🚀 核心新增：朗读 / 停止朗读控制函数
     toggleSpeak(text, index) {
       if (!('speechSynthesis' in window)) {
         return alert('您的浏览器不支持语音朗读功能');
       }
 
-      // 1. 如果正在朗读当前条目，则停止
       if (this.speakingIndex === index) {
         window.speechSynthesis.cancel();
         this.speakingIndex = null;
         return;
       }
 
-      // 2. 先取消之前的播放
       window.speechSynthesis.cancel();
 
-      // 3. 创建新的语音对象
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-CN'; // 设为中文
-      utterance.rate = 1.0;     // 语速 (0.5 ~ 2.0)
-      utterance.pitch = 1.0;    // 音调 (0 ~ 2)
+      utterance.lang = 'zh-CN'; 
+      utterance.rate = 1.0;     
+      utterance.pitch = 1.0;    
 
-      // 播放结束时的回调，重置按钮状态
       utterance.onend = () => {
         this.speakingIndex = null;
       };
 
-      // 发生错误时的处理
       utterance.onerror = () => {
         this.speakingIndex = null;
       };
 
-      // 开始播报
       this.speakingIndex = index;
       window.speechSynthesis.speak(utterance);
     },
 
     scrollToBottom() {
-      const box = this.$refs.chatBox;
-      if(box) box.scrollTop = box.scrollHeight;
+      this.$nextTick(() => {
+        setTimeout(() => {
+          const box = this.$refs.scrollContainer; 
+          if (box) {
+            box.scrollTop = box.scrollHeight;
+          }
+        }, 80);
+      });
     },
 
     startVoice() {
@@ -115,7 +121,6 @@ export default {
     }
   },
 
-  // 页面切走或组件销毁时，自动停止播放，防止后台一直响
   unmounted() {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
