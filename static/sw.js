@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familybot-cache-v3';
+const CACHE_NAME = 'familybot-cache-v4';
 
 // 移除了容易报404的 './'，并将 Vue 换成了 prod 生产版
 const urlsToCache = [

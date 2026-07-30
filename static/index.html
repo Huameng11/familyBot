@@ -14,7 +14,7 @@
   <chat-tab v-show="currentTab === 'home'"></chat-tab>
   <medicine-tab v-show="currentTab === 'medicine'"></medicine-tab>
   <storage-tab v-show="currentTab === 'storage'"></storage-tab>
-  <memo-tab v-show="currentTab === 'memo'"></memo-tab>
+  <more-tab v-show="currentTab === 'more'" @update-title="updateHeaderTitle"></more-tab>
 
   <nav class="nav-bar">
     <button :class="['nav-item', {active: currentTab==='home'}]" @click="switchTab('home', '🏠 FamilyBot 家庭管家')">
@@ -26,8 +26,8 @@
     <button :class="['nav-item', {active: currentTab==='storage'}]" @click="switchTab('storage', '📦 家庭仓库')">
       <span class="nav-icon">📦</span><span>家庭仓库</span>
     </button>
-    <button :class="['nav-item', {active: currentTab==='memo'}]" @click="switchTab('memo', '📝 家庭备忘录')">
-      <span class="nav-icon">📝</span><span>家庭备忘</span>
+    <button :class="['nav-item', {active: currentTab==='more'}]" @click="switchTab('more', '🧰 更多服务')">
+      <span class="nav-icon">🧰</span><span>更多服务</span>
     </button>
   </nav>
 </div>
@@ -36,11 +36,11 @@
   import ChatTab from './components/ChatTab.js';
   import MedicineTab from './components/MedicineTab.js';
   import StorageTab from './components/StorageTab.js';
-  import MemoTab from './components/MemoTab.js';
+  import MoreTab from './components/MoreTab.js';
 
   const { createApp } = Vue;
   createApp({
-    components: { ChatTab, MedicineTab, StorageTab, MemoTab },
+    components: { ChatTab, MedicineTab, StorageTab, MoreTab },
     data() {
       return {
         headerTitle: '🏠 FamilyBot 家庭管家',
@@ -51,6 +51,9 @@
       switchTab(tab, title) {
         this.currentTab = tab;
         this.headerTitle = title;
+      },
+      updateHeaderTitle(newTitle) {
+        this.headerTitle = newTitle;
       }
     }
   }).mount('#app');
