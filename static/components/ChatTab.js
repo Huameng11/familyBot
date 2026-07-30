@@ -4,28 +4,32 @@ export default {
     <div class="content-section" ref="scrollContainer">
       <div style="padding: 10px 15px 0 15px; display: flex; justify-content: space-between; align-items: center;">
         <span style="font-size: 12px; color: #888;">📊 对话持久化缓存已开启</span>
-        <button 
-          class="btn" 
-          style="background: #ff4d4f; font-size: 11px; padding: 4px 10px; border-radius: 6px;"
-          @click="clearHistory"
-        >
+        <button class="btn" style="background: #ff4d4f; font-size: 11px; padding: 4px 10px; border-radius: 6px;" @click="clearHistory">
           🗑️ 清空记录
         </button>
       </div>
 
       <div id="chat-box" ref="chatBox">
         <div v-for="(msg, index) in chatHistory" :key="index" :class="['msg', msg.role]">
-          <div v-html="renderMarkdown(msg.text)" class="markdown-body"></div>
           
-          <div v-if="msg.role === 'bot'" style="margin-top: 8px; text-align: right;">
-            <button 
-              class="btn" 
-              style="background: #e8eaf6; color: #3F51B5; font-size: 11px; padding: 3px 8px; border-radius: 12px;"
-              @click="toggleSpeak(msg.text, index)"
-            >
-              {{ speakingIndex === index ? '⏹️ 停止' : '🔊 朗读' }}
+          <template v-if="msg.role === 'bot'">
+            <div class="msg-header">
+              <div class="msg-author">🤖 FamilyBot</div>
+              <button class="copy-btn" @click="copyText(msg.text)">复制</button>
+            </div>
+            <div v-html="renderMarkdown(msg.text)" class="markdown-body"></div>
+            <button class="play-btn" @click="toggleSpeak(msg.text, index)">
+              {{ speakingIndex === index ? '⏹️ 停止朗读' : '▶   朗 读' }}
             </button>
-          </div>
+          </template>
+
+          <template v-else>
+            <div class="msg-header">
+              <div class="msg-author" style="color: #c5cae9;">👤 User</div>
+            </div>
+            <div class="user-content">{{ msg.text }}</div>
+          </template>
+          
         </div>
         <div v-if="isThinking" class="loading">大管家正在检索数据库...</div>
       </div>
@@ -39,7 +43,7 @@ export default {
   `,
   data() {
     return {
-      chatHistory: [], // 初始留空，从数据库动态加载
+      chatHistory: [], 
       userInput: '',
       isThinking: false,
       isRecording: false,
@@ -47,7 +51,46 @@ export default {
     }
   },
   methods: {
-    // 新增方法：初始化时从后端抓取数据库中的历史记录
+    // 🚀 新增：一键复制文本功能
+    // 🚀 修复版：带降级兼容的一键复制文本功能
+    async copyText(text) {
+      // 1. 如果支持现代剪贴板 API 且在 HTTPS/localhost 安全环境下
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          alert('✅ 内容已复制到剪贴板！');
+          return;
+        } catch (err) {
+          console.warn("现代复制失败，尝试降级...", err);
+        }
+      }
+      
+      // 2. 降级方案：适用于局域网 HTTP 访问
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        // 将 textarea 移出视口，避免页面滚动跳动
+        textArea.style.position = "fixed";
+        textArea.style.top = "-999999px";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+          alert('✅ 内容已复制到剪贴板！');
+        } else {
+          alert('❌ 复制失败，请手动长按文字复制。');
+        }
+      } catch (err) {
+        alert('❌ 浏览器不支持此操作，请长按文字复制。');
+      }
+    },
+
     async loadChatHistory() {
       try {
         const res = await fetch('/api/chat/history');
@@ -55,7 +98,6 @@ export default {
         if (data.status === 'success' && data.data.length > 0) {
           this.chatHistory = data.data;
         } else {
-          // 如果数据库是空的，展现一行欢迎语（不存入数据库，仅用于展现）
           this.chatHistory = [{ role: 'bot', text: '欢迎回来！我是你的家庭超级管家 **FamilyBot**。' }];
         }
         this.scrollToBottom();
@@ -64,14 +106,12 @@ export default {
       }
     },
 
-    // 新增方法：一键清空记录
     async clearHistory() {
       if (confirm('确定要永久清空所有的聊天记录吗？此操作不可恢复。')) {
         try {
           const res = await fetch('/api/chat/clear', { method: 'POST' });
           const data = await res.json();
           if (data.status === 'success') {
-            // 清空前端数组并初始化欢迎语
             this.chatHistory = [{ role: 'bot', text: '聊天记录已成功清空。大管家随时等待您的吩咐。 ✨' }];
             alert('清空成功！');
           }
@@ -110,28 +150,18 @@ export default {
       if (!('speechSynthesis' in window)) {
         return alert('您的浏览器不支持语音朗读功能');
       }
-
       if (this.speakingIndex === index) {
         window.speechSynthesis.cancel();
         this.speakingIndex = null;
         return;
       }
-
       window.speechSynthesis.cancel();
-
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'zh-CN'; 
       utterance.rate = 1.0;     
       utterance.pitch = 1.0;    
-
-      utterance.onend = () => {
-        this.speakingIndex = null;
-      };
-
-      utterance.onerror = () => {
-        this.speakingIndex = null;
-      };
-
+      utterance.onend = () => { this.speakingIndex = null; };
+      utterance.onerror = () => { this.speakingIndex = null; };
       this.speakingIndex = index;
       window.speechSynthesis.speak(utterance);
     },
@@ -140,9 +170,7 @@ export default {
       this.$nextTick(() => {
         setTimeout(() => {
           const box = this.$refs.scrollContainer; 
-          if (box) {
-            box.scrollTop = box.scrollHeight;
-          }
+          if (box) { box.scrollTop = box.scrollHeight; }
         }, 80);
       });
     },
@@ -163,15 +191,10 @@ export default {
       recognition.onend = () => { this.isRecording = false; };
     }
   },
-
-  // 🚀 组件挂载时自动拉取 SQLite 历史数据
   mounted() {
     this.loadChatHistory();
   },
-
   unmounted() {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); }
   }
 }

@@ -33,44 +33,89 @@ header {
   -webkit-overflow-scrolling: touch; 
 }
 
-/* ================= 聊天/问答模块（优化版） ================= */
+/* ================= 聊天/问答模块（全新满屏卡片版） ================= */
 #chat-box { 
   padding: 15px; 
   display: flex; 
   flex-direction: column; 
-  gap: 12px; 
-  /* 修复核心：从 80px 增大到 140px，预留足够空间防止最后一行被底部固定输入栏遮挡 */
+  gap: 16px; 
   padding-bottom: 140px !important; 
 }
 
-
 .msg { 
-  max-width: 80%; 
-  padding: 12px 12px; 
-  border-radius: 12px; 
-  font-size: 15px; 
-  line-height: 1.5; 
+  width: 100%; /* 🚀 核心修改：取消原先的 max-width:80%，让卡片左右占满容器 */
+  padding: 16px; 
+  border-radius: 16px; 
+  font-size: 16px; 
+  line-height: 1.6; 
   word-wrap: break-word; 
   position: relative;
-  /* 关键修复：让浏览器保留并渲染大模型返回的换行符和空格缩进 */
-  white-space: pre-wrap; 
-}
-.bot { 
-  background: white; 
-  align-self: flex-start; 
-  color: #333; 
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-  border-bottom-left-radius: 2px; 
-  /* 修复核心：给气泡底部留出空间，稳定承载“🔊 朗读”按钮，防止文本与按钮重叠 */
-  padding-bottom: 12px !important; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06); /* 增加现代感阴影 */
 }
 
+/* 🤖 机器人卡片样式（薄荷绿） */
+.bot { 
+  background: #eaf8f5; /* 清新的薄荷浅绿色 */
+  color: #1a4a40; 
+  border: 1px solid #d4ede6;
+}
+
+/* 👤 用户卡片样式（深蓝色） */
 .user { 
   background: #3F51B5; 
   color: white; 
-  align-self: flex-end; 
-  border-bottom-right-radius: 2px; 
 }
+.user-content {
+  white-space: pre-wrap;
+}
+
+/* 卡片 Header（头像与按钮） */
+.msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: bold;
+  font-size: 15px;
+}
+.bot .msg-header {
+  color: #000;
+}
+
+/* 复制按钮 */
+.copy-btn {
+  background: #f1f3f4;
+  color: #333;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.copy-btn:active { background: #e0e0e0; }
+
+/* 通栏蓝色播放按钮 */
+.play-btn {
+  width: 100%;
+  background: #1890ff; /* 鲜艳纯粹的科技蓝 */
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: bold;
+  margin-top: 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.3);
+  transition: background 0.2s;
+}
+.play-btn:active { background: #007bff; }
 
 .input-area { 
   background: white; 
@@ -84,57 +129,49 @@ header {
   right: 0; 
   z-index: 10; 
 }
+input[type="text"] { border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; width: 100%; background: #fafafa; }
+input[type="text"]:focus { border-color: #3F51B5; background: #fff; }
+.chat-input { border-radius: 20px !important; }
+.btn { background: #3F51B5; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; font-weight: bold; }
+.voice-btn { background: #ff9800; border-radius: 50%; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; color: white; flex-shrink: 0; }
+.loading { align-self: center; color: #888; font-size: 13px; margin: 10px 0; }
 
-input[type="text"] { 
-  border: 1px solid #ddd; 
-  border-radius: 8px; 
-  padding: 10px; 
-  font-size: 14px; 
-  outline: none; 
-  width: 100%; 
-  background: #fafafa; 
+/* ================= 表单卡片与列表（原样保留） ================= */
+/* 这里往下保留原有的表单及下面部分的代码... */
+
+/* 请将文件最底部的 Markdown 样式更新为如下配色以适配薄荷绿卡片 */
+/* ================= Markdown 高级富文本渲染样式 ================= */
+.markdown-body {
+  font-size: 16px;
+  color: #2c3e50;
+  line-height: 1.7;
+}
+.markdown-body p { margin: 0 0 10px 0; }
+.markdown-body p:last-child { margin-bottom: 0; }
+.markdown-body ul, .markdown-body ol { margin: 0 0 10px 0; padding-left: 20px; }
+.markdown-body li { margin-bottom: 6px; }
+
+/* 粗体颜色（墨绿色更搭） */
+.bot .markdown-body strong { color: #047857; font-weight: 700; }
+.user .markdown-body strong { color: #fff; }
+
+/* 🌟 高级彩色徽章标签（暖橙色，对应图中的橙色标签） */
+.bot .markdown-body code {
+  background-color: #fff3e0;
+  color: #e65100;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 2px;
+  border: 1px solid #ffe0b2;
 }
 
-input[type="text"]:focus { 
-  border-color: #3F51B5; 
-  background: #fff; 
-}
-
-.chat-input { 
-  border-radius: 20px !important; 
-}
-
-.btn { 
-  background: #3F51B5; 
-  color: white; 
-  border: none; 
-  border-radius: 8px; 
-  padding: 8px 14px; 
-  font-size: 14px; 
-  cursor: pointer; 
-  font-weight: bold; 
-}
-
-.voice-btn { 
-  background: #ff9800; 
-  border-radius: 50%; 
-  width: 42px; 
-  height: 42px; 
-  padding: 0; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  border: none; 
-  color: white; 
-  flex-shrink: 0; 
-}
-
-.loading { 
-  align-self: flex-start; 
-  color: #888; 
-  font-size: 13px; 
-  margin-left: 5px; 
-}
+/* 表格支持 */
+.markdown-body table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+.markdown-body th, .markdown-body td { border: 1px solid #c9e6de; padding: 8px; text-align: left; }
+.markdown-body th { background-color: #d6f2ec; color: #1a4a40; }
 
 /* ================= 表单卡片与列表 ================= */
 .manager-padding { 
@@ -359,7 +396,7 @@ textarea {
 }
 /* ================= Markdown 高级富文本渲染样式 ================= */
 .markdown-body {
-  font-size: 14px;
+  font-size: 16px;
   color: inherit;
 }
 
@@ -407,7 +444,7 @@ textarea {
   width: 100%;
   border-collapse: collapse;
   margin: 10px 0;
-  font-size: 13px;
+  font-size: 15px;
 }
 .markdown-body th, .markdown-body td {
   border: 1px solid #ddd;
