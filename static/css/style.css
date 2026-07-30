@@ -46,7 +46,7 @@ header {
 
 .msg { 
   max-width: 80%; 
-  padding: 12px 16px; 
+  padding: 12px 12px; 
   border-radius: 12px; 
   font-size: 15px; 
   line-height: 1.5; 

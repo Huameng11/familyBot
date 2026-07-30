@@ -2,6 +2,17 @@ export default {
   name: 'ChatTab',
   template: `
     <div class="content-section" ref="scrollContainer">
+      <div style="padding: 10px 15px 0 15px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 12px; color: #888;">📊 对话持久化缓存已开启</span>
+        <button 
+          class="btn" 
+          style="background: #ff4d4f; font-size: 11px; padding: 4px 10px; border-radius: 6px;"
+          @click="clearHistory"
+        >
+          🗑️ 清空记录
+        </button>
+      </div>
+
       <div id="chat-box" ref="chatBox">
         <div v-for="(msg, index) in chatHistory" :key="index" :class="['msg', msg.role]">
           <div v-html="renderMarkdown(msg.text)" class="markdown-body"></div>
@@ -28,7 +39,7 @@ export default {
   `,
   data() {
     return {
-      chatHistory: [{ role: 'bot', text: '欢迎回来！我是你的家庭超级管家 **FamilyBot**。 👋' }],
+      chatHistory: [], // 初始留空，从数据库动态加载
       userInput: '',
       isThinking: false,
       isRecording: false,
@@ -36,10 +47,42 @@ export default {
     }
   },
   methods: {
-    // 新增：Markdown 渲染函数
+    // 新增方法：初始化时从后端抓取数据库中的历史记录
+    async loadChatHistory() {
+      try {
+        const res = await fetch('/api/chat/history');
+        const data = await res.json();
+        if (data.status === 'success' && data.data.length > 0) {
+          this.chatHistory = data.data;
+        } else {
+          // 如果数据库是空的，展现一行欢迎语（不存入数据库，仅用于展现）
+          this.chatHistory = [{ role: 'bot', text: '欢迎回来！我是你的家庭超级管家 **FamilyBot**。' }];
+        }
+        this.scrollToBottom();
+      } catch (e) {
+        console.error("加载聊天历史记录失败", e);
+      }
+    },
+
+    // 新增方法：一键清空记录
+    async clearHistory() {
+      if (confirm('确定要永久清空所有的聊天记录吗？此操作不可恢复。')) {
+        try {
+          const res = await fetch('/api/chat/clear', { method: 'POST' });
+          const data = await res.json();
+          if (data.status === 'success') {
+            // 清空前端数组并初始化欢迎语
+            this.chatHistory = [{ role: 'bot', text: '聊天记录已成功清空。大管家随时等待您的吩咐。 ✨' }];
+            alert('清空成功！');
+          }
+        } catch (e) {
+          alert('清空失败，网络或后端接口异常');
+        }
+      }
+    },
+
     renderMarkdown(text) {
       if (!text) return '';
-      // 使用 marked 库将 md 文本转换为 html，并配置安全渲染
       return marked.parse(text, { breaks: true, gfm: true });
     },
 
@@ -119,6 +162,11 @@ export default {
       recognition.onerror = () => { this.isRecording = false; };
       recognition.onend = () => { this.isRecording = false; };
     }
+  },
+
+  // 🚀 组件挂载时自动拉取 SQLite 历史数据
+  mounted() {
+    this.loadChatHistory();
   },
 
   unmounted() {
