@@ -1,0 +1,14 @@
+
+services:
+  familybot:
+    # 1. 明确镜像名字（方便后续 docker compose push 发布）
+    image: 254521335/familybot:latest
+    # 2. 本地构建
+    build: .
+    container_name: familybot_server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.env:/app/.env
+      - ./data:/app/data
+    restart: always
