@@ -9,8 +9,8 @@ export default {
           <input type="text" v-model="newMemo.title" class="form-control" placeholder="如：燃气缴费户号、宽带密码">
         </div>
         <div class="form-group">
-          <label>详细记录内容</label>
-          <textarea v-model="newMemo.content" rows="3" placeholder="在这里输入详细需要记住的信息..."></textarea>
+          <label>详细记录内容 (支持 MD 排版)</label>
+          <textarea v-model="newMemo.content" rows="3" class="form-control" placeholder="如：\n- 户号：12345678\n- 户名：张三..."></textarea>
         </div>
         <button class="btn" style="width:100%; background:#9C27B0;" @click="addMemo">保存到备忘录</button>
       </div>
@@ -44,9 +44,18 @@ export default {
                 <label>备忘主题说明</label>
                 <input type="text" class="form-control" v-model="memo.title">
               </div>
+              
               <div class="form-group">
-                <label>详细记录内容</label>
-                <textarea class="form-control" rows="4" v-model="memo.content"></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <label>详细记录内容</label>
+                  <span class="edit-toggle-link" @click="memo.isEditing = !memo.isEditing">
+                    {{ memo.isEditing ? '👁️ 预览排版' : '✍️ 修改内容' }}
+                  </span>
+                </div>
+                <textarea v-if="memo.isEditing" class="form-control" rows="5" v-model="memo.content"></textarea>
+                <div v-else class="accordion-markdown-panel">
+                  <div v-html="renderMarkdown(memo.content || '*暂无详细记录内容*')" class="markdown-body"></div>
+                </div>
               </div>
 
               <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee;">
@@ -82,7 +91,17 @@ export default {
     toggleExpand(item) {
       item.isExpanded = !item.isExpanded;
     },
-    // 格式化数据库自带的时间戳，仅保留年月日展示
+    renderMarkdown(text) {
+      if (!text || typeof text !== 'string') return '';
+      try {
+        if (typeof marked !== 'undefined' && marked.parse) {
+          return marked.parse(text, { breaks: true, gfm: true });
+        }
+        return text.replace(/\n/g, '<br>');
+      } catch (e) {
+        return text.replace(/\n/g, '<br>');
+      }
+    },
     formatQueryDate(dateStr) {
       if (!dateStr) return '刚刚';
       return dateStr.split(' ')[0] || dateStr;
@@ -91,22 +110,32 @@ export default {
       const res = await fetch('/api/memos');
       const data = await res.json();
       if (data.status === 'success') {
-        // 🚀 获取全量数据后，动态塞入响应式 isExpanded: false 状态实现初始折叠
-        this.memoList = data.data.map(item => ({ ...item, isExpanded: false }));
+        this.memoList = data.data.map(item => ({ 
+          ...item, 
+          isExpanded: false,
+          isEditing: false
+        }));
       }
     },
     async addMemo() {
       if (!this.newMemo.title) return alert('请输入主题描述');
-      const params = new URLSearchParams(this.newMemo).toString();
-      await fetch(`/api/add_memo?${params}`, { method: 'POST' });
-      alert('录入成功');
+      const u = new URLSearchParams();
+      u.append('title', this.newMemo.title);
+      u.append('content', this.newMemo.content || '');
+      await fetch(`/api/add_memo?${u.toString()}`, { method: 'POST' });
+      alert('🎉 备忘录入成功');
       this.newMemo = { title: '', content: '' };
       this.fetchList();
     },
     async updateMemo(memo) {
-      const params = new URLSearchParams({ id: memo.id, title: memo.title, content: memo.content }).toString();
-      await fetch(`/api/update_memo?${params}`, { method: 'POST' });
-      alert('修改已成功保存！');
+      const u = new URLSearchParams();
+      u.append('id', memo.id);
+      u.append('title', memo.title);
+      u.append('content', memo.content || '');
+      await fetch(`/api/update_memo?${u.toString()}`, { method: 'POST' });
+      memo.isEditing = false;
+      alert('✅ 修改已成功保存！');
+      this.fetchList();
     },
     async deleteMemo(id) {
       if (confirm('确定要删除这条备忘信息吗？')) {

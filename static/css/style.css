@@ -1,3 +1,6 @@
+/* ==========================================================================
+   1. 全局基础重置与页面防御布局
+   ========================================================================== */
 * { 
   box-sizing: border-box; 
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -33,13 +36,15 @@ header {
   -webkit-overflow-scrolling: touch; 
 }
 
-/* ================= 聊天/问答模块（全新满屏卡片版） ================= */
+/* ==========================================================================
+   2. 聊天/问答模块（全新满屏高级卡片流）
+   ========================================================================== */
 #chat-box { 
   padding: 15px; 
   display: flex; 
   flex-direction: column; 
   gap: 16px; 
-  padding-bottom: 140px !important; 
+  padding-bottom: 140px !important; /* 留出底部固定输入栏加安全间距的高度 */
 }
 
 .msg { 
@@ -53,20 +58,24 @@ header {
   box-shadow: 0 4px 12px rgba(0,0,0,0.06); 
 }
 
+/* 🤖 机器人卡片样式（薄荷绿） */
 .bot { 
   background: #eaf8f5; 
   color: #1a4a40; 
   border: 1px solid #d4ede6;
 }
 
+/* 👤 用户卡片样式（深蓝色） */
 .user { 
   background: #3F51B5; 
   color: white; 
 }
+
 .user-content {
   white-space: pre-wrap;
 }
 
+/* 卡片 Header（名称与复制按钮） */
 .msg-header {
   display: flex;
   justify-content: space-between;
@@ -75,10 +84,12 @@ header {
   font-weight: bold;
   font-size: 15px;
 }
+
 .bot .msg-header {
   color: #000;
 }
 
+/* 局域网 HTTP 降级兼容复制按钮 */
 .copy-btn {
   background: #f1f3f4;
   color: #333;
@@ -92,6 +103,7 @@ header {
 }
 .copy-btn:active { background: #e0e0e0; }
 
+/* 通栏蓝色播放/停止按钮 */
 .play-btn {
   width: 100%;
   background: #1890ff; 
@@ -112,6 +124,7 @@ header {
 }
 .play-btn:active { background: #007bff; }
 
+/* 聊天固定输入区域 */
 .input-area { 
   background: white; 
   padding: 10px; 
@@ -124,14 +137,50 @@ header {
   right: 0; 
   z-index: 10; 
 }
-input[type="text"] { border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 16px; outline: none; width: 100%; background: #fafafa; }
+
+input[type="text"] { 
+  border: 1px solid #ddd; 
+  border-radius: 8px; 
+  padding: 10px; 
+  font-size: 16px; 
+  outline: none; 
+  width: 100%; 
+  background: #fafafa; 
+}
 input[type="text"]:focus { border-color: #3F51B5; background: #fff; }
+
 .chat-input { border-radius: 20px !important; }
-.btn { background: #3F51B5; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; font-weight: bold; }
-.voice-btn { background: #ff9800; border-radius: 50%; width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; color: white; flex-shrink: 0; }
+
+.btn { 
+  background: #3F51B5; 
+  color: white; 
+  border: none; 
+  border-radius: 8px; 
+  padding: 8px 14px; 
+  font-size: 14px; 
+  cursor: pointer; 
+  font-weight: bold; 
+}
+
+.voice-btn { 
+  background: #ff9800; 
+  border-radius: 50%; 
+  width: 42px; 
+  height: 42px; 
+  padding: 0; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  border: none; 
+  color: white; 
+  flex-shrink: 0; 
+}
+
 .loading { align-self: center; color: #888; font-size: 13px; margin: 10px 0; }
 
-/* ================= 公共表单卡片基础布局 ================= */
+/* ==========================================================================
+   3. 公共表单卡片基础布局（新增/修改面板）
+   ========================================================================== */
 .manager-padding { 
   padding: 15px 15px 80px 15px; 
 } 
@@ -175,11 +224,7 @@ input[type="text"]:focus { border-color: #3F51B5; background: #fff; }
   width: 100%; 
   background: #fafafa; 
 }
-
-.form-control:focus { 
-  border-color: #3F51B5; 
-  background: #fff; 
-}
+.form-control:focus { border-color: #3F51B5; background: #fff; }
 
 .search-input { 
   border: 2px solid #3F51B5; 
@@ -192,14 +237,16 @@ textarea {
   border: 1px solid #ddd; 
   border-radius: 8px; 
   padding: 10px; 
-  font-size: 14px; 
+  font-size: 15px; 
   outline: none; 
   resize: vertical; 
   background: #fafafa; 
   width: 100%; 
 }
 
-/* ================= 🚀 模块化重构：通用全宽折叠面板样式 ================= */
+/* ==========================================================================
+   4. 模块化通用全宽折叠面板样式（药箱、仓库、日历、菜谱、备忘录公用）
+   ========================================================================== */
 .common-accordion-list {
   display: flex;
   flex-direction: column;
@@ -216,6 +263,7 @@ textarea {
   transition: all 0.2s ease;
 }
 
+/* 列表行头部常显结构 */
 .accordion-header {
   padding: 14px 16px;
   display: flex;
@@ -268,7 +316,7 @@ textarea {
   color: #3F51B5;
 }
 
-/* 展开后的通用卡片体容器 */
+/* 展开后的详细编辑表单容器体 */
 .accordion-body {
   padding: 14px 16px 16px 16px;
   background: #fafbfc;
@@ -278,28 +326,96 @@ textarea {
   gap: 12px;
 }
 
-/* 🎨 专属模块级色彩定义 */
-/* 1. 智能药箱色彩 */
+/* ==========================================================================
+   5. 🚀 核心新增：折叠体内部长文本 Markdown 富文本流展示面板
+   ========================================================================== */
+.accordion-markdown-panel {
+  background: #ffffff;
+  border: 1px solid #eef1f6;
+  border-radius: 10px;
+  padding: 12px 14px;
+  min-height: 50px;
+  width: 100%;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+}
+
+/* 切换编辑状态的微调联动小文本 */
+.edit-toggle-link {
+  font-size: 12px;
+  color: #3F51B5;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+  user-select: none;
+}
+.edit-toggle-link:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   6. 各专属子模块色彩体系设计（徽章配色）
+   ========================================================================== */
+/* 💊 智能药箱主题（薄荷绿） */
 .med-item-theme .badge-main { background: #e8f5e9; color: #2e7d32; }
 .med-item-theme .badge-sub { background: #e3f2fd; color: #1565c0; }
 
-/* 2. 家庭仓库色彩（暖橘色系） */
+/* 📦 家庭仓库主题（暖橘色） */
 .storage-item-theme .badge-main { background: #fff3e0; color: #e65100; }
 .storage-item-theme .badge-sub { background: #efebe9; color: #4e342e; }
 
-/* 3. 家庭日历色彩（天空青色系） */
+/* 📅 家庭日历主题（天空青） */
 .calendar-item-theme .badge-main { background: #e0f7fa; color: #00838f; }
 .calendar-item-theme .badge-sub { background: #e0f2f1; color: #00695c; }
 
-/* 4. 家庭菜谱色彩（番茄红系列） */
+/* 🍳 家庭菜谱主题（番茄红） */
 .recipe-item-theme .badge-main { background: #ffebee; color: #c62828; }
 .recipe-item-theme .badge-sub { background: #fce4ec; color: #ad1457; }
 
-/* 5. 家庭备忘录色彩（优雅紫系列） */
+/* 📝 家庭备忘录主题（优雅紫） */
 .memo-item-theme .badge-main { background: #f3e5f5; color: #7b1fa2; }
-.memo-item-theme .badge-sub { background: #f3e5f5; color: #8e24aa; }
+.memo-item-theme .badge-sub { background: #fdf2ff; color: #8e24aa; }
 
-/* ================= 底部导航栏 Tab ================= */
+/* ==========================================================================
+   7. Markdown 模块高级富文本渲染规则
+   ========================================================================== */
+.markdown-body {
+  font-size: 16px;
+  color: #2c3e50;
+  line-height: 1.7;
+}
+.markdown-body p { margin: 0 0 10px 0; }
+.markdown-body p:last-child { margin-bottom: 0; }
+.markdown-body ul, .markdown-body ol { margin: 0 0 10px 0; padding-left: 20px; }
+.markdown-body li { margin-bottom: 6px; }
+
+/* 大管家消息内的粗体渲染 */
+.bot .markdown-body strong { color: #047857; font-weight: 700; }
+/* 只读流式面板内的粗体颜色兜底 */
+.accordion-markdown-panel .markdown-body strong { color: #3F51B5; font-weight: 700; }
+.user .markdown-body strong { color: #fff; }
+
+/* 🌟 彩色行内高亮代码徽章 */
+.bot .markdown-body code,
+.accordion-markdown-panel .markdown-body code {
+  background-color: #fff3e0 !important;
+  color: #e65100 !important;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 2px;
+  border: 1px solid #ffe0b2 !important;
+}
+
+/* 高级响应式表格排版 */
+.markdown-body table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+.markdown-body th, .markdown-body td { border: 1px solid #c9e6de; padding: 8px; text-align: left; }
+.markdown-body th { background-color: #d6f2ec; color: #1a4a40; }
+
+/* ==========================================================================
+   8. 底部导航栏与“更多服务”移动端防御网格
+   ========================================================================== */
 .nav-bar { 
   position: fixed; 
   bottom: 0; 
@@ -313,11 +429,27 @@ textarea {
   align-items: center; 
   z-index: 100; 
 }
-.nav-item { background: none; border: none; flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #757575; font-size: 11px; cursor: pointer; }
-.nav-item.active { color: #3F51B5; font-weight: bold; }
+
+.nav-item { 
+  background: none; 
+  border: none; 
+  flex: 1; 
+  height: 100%; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 2px; 
+  color: #757575; 
+  font-size: 11px; 
+  cursor: pointer; 
+}
+.nav-item.active { 
+  color: #3F51B5; 
+  font-weight: bold; 
+}
 .nav-icon { font-size: 18px; }
 
-/* ================= 更多/工具箱移动端网格 ================= */
 .more-grid-container { padding: 0 4px; }
 .more-grid { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; width: 100% !important; box-sizing: border-box !important; }
 .grid-card { background: #ffffff !important; border-radius: 12px !important; padding: 14px 12px !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important; border: 1px solid #edf0f7 !important; display: flex !important; flex-direction: column !important; align-items: center !important; text-align: center !important; position: relative !important; cursor: pointer !important; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease; }
@@ -327,23 +459,3 @@ textarea {
 .grid-card-desc { font-size: 11px !important; color: #8a94a6 !important; line-height: 1.3 !important; word-break: break-all; }
 .grid-card-badge { position: absolute !important; top: 8px !important; right: 8px !important; background: #e8eaf6 !important; color: #3F51B5 !important; font-size: 10px !important; padding: 2px 6px !important; border-radius: 10px !important; font-weight: bold !important; line-height: 1.2 !important; }
 .grid-card-badge.planning { background: #f5f5f5 !important; color: #9e9e9e !important; }
-
-/* ================= Markdown 渲染样式 ================= */
-.markdown-body { font-size: 16px; color: #2c3e50; line-height: 1.7; }
-.markdown-body p { margin: 0 0 10px 0; }
-.markdown-body p:last-child { margin-bottom: 0; }
-.markdown-body ul, .markdown-body ol { margin: 0 0 10px 0; padding-left: 20px; }
-.markdown-body li { margin-bottom: 6px; }
-.bot .markdown-body strong { color: #047857; font-weight: 700; }
-.user .markdown-body strong { color: #fff; }
-.bot .markdown-body code { background-color: #fff3e0; color: #e65100; padding: 3px 8px; border-radius: 6px; font-family: inherit; font-size: 14px; font-weight: 600; margin: 0 2px; border: 1px solid #ffe0b2; }
-.markdown-body table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
-.markdown-body th, .markdown-body td { border: 1px solid #c9e6de; padding: 8px; text-align: left; }
-.markdown-body th { background-color: #d6f2ec; color: #1a4a40; }
-
-/* 备忘录及其他旧列表样式兼容兜底 */
-.item-card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-.memo-border { border-left: 5px solid #9C27B0; }
-.item-card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
-.item-title-input { font-weight: bold; font-size: 16px; border: none; background: none; flex: 1; outline: none; padding: 4px 0; color: #222; }
-.action-btns { display: flex; gap: 6px; }
