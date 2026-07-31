@@ -194,3 +194,15 @@ async def chat_with_bot(query: str):
         return {"reply": reply_content}
     except Exception as e:
         return {"reply": f"大管家思考失败，请检查密钥或网络: {str(e)}"}
+# routers/chat.py 底部的测试路由优化版
+from services.notifier import run_daily_morning_job
+
+@router.post("/api/debug/trigger_morning_report")
+async def trigger_morning_report_debug(secret_key: str = ""):
+    """手动一键触发每日早报（带暗号保护）"""
+    # 🚀 只有暗号对上了才执行，防外网误触
+    if secret_key != "open666": 
+        return {"status": "error", "message": "暗号错误，拒绝执行推送"}
+        
+    await run_daily_morning_job()
+    return {"status": "success", "message": "企业微信早报已手动执行发送！"}

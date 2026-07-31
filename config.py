@@ -12,3 +12,5 @@ AGNES_API_KEY = os.getenv("AGNES_API_KEY", API_KEY)  # 如果没单独配，默�
 AGNES_BASE_URL = os.getenv("AGNES_BASE_URL", "https://apihub.agnes-ai.com/v1")
 # Windows 本地开发建议直接在项目根目录下生成 db
 DB_PATH = os.getenv("FAMILYBOT_DB_PATH", "medicine.db")
+#企业微信推送地址
+WECHAT_WEBHOOK_URL = os.getenv("FAMILYBOT_WECHAT_WEBHOOK_URL", "xxxxxx")
