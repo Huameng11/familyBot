@@ -58,6 +58,18 @@ def init_db():
             remark TEXT DEFAULT ''
         )
     ''')
+    # 🚀 5. 家庭菜谱表
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS recipes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            category TEXT DEFAULT '',
+            ingredients TEXT DEFAULT '',
+            difficulty TEXT DEFAULT '',
+            steps TEXT DEFAULT '',
+            tutorial_link TEXT DEFAULT ''
+        )
+    ''')
     conn.commit()
     conn.close()
 # 获取历史聊天记录（按时间正序排列，保证聊天流逻辑正确）
@@ -101,6 +113,15 @@ def get_db_calendars():
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM calendars ORDER BY event_date ASC")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+# 获取所有家庭菜谱记录
+def get_db_recipes():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM recipes ORDER BY id DESC")
     rows = cursor.fetchall()
     conn.close()
     return rows
