@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 import sqlite3
 from openai import AsyncOpenAI
 from config import API_KEY, BASE_URL, MODEL_NAME, DB_PATH
-from database import get_db_medicines, get_db_storage, get_db_memos, get_db_chat_history
+from database import get_db_medicines, get_db_storage, get_db_memos, get_db_chat_history, get_db_calendars
 
 router = APIRouter(tags=["AI Chat"])
 client = AsyncOpenAI(api_key=API_KEY, base_url=BASE_URL, timeout=20.0)
@@ -53,8 +53,11 @@ async def chat_with_bot(query: str):
     db_memos = get_db_memos()
     memo_str = "\n".join([f"- 事件/标题: {s['title']} | 详细内容: {s['content']}" for s in db_memos])
 
+    db_calendars = get_db_calendars()
+    cal_str = "\n".join([f"- {c['event_date']} | {c['title']} | 分类:{c['category']} | 位置:{c['location']} | 提醒:{c['remind_time']} | 备注:{c['remark']}" for c in db_calendars])
+
     system_prompt = f"""你是一个全能的家庭超级大管家智能体（FamilyBot）。
-你目前已经成功接入了主人的【家庭药品数据库】、【家庭物资仓库数据库】和【家庭日常备忘录】。
+你目前已经成功接入了主人的【家庭药品数据库】、【家庭物资仓库数据库】、【家庭日常备忘录】和【家庭日历行程库】。
 
 【家庭药品清单】：
 {med_str}
@@ -64,6 +67,9 @@ async def chat_with_bot(query: str):
 
 【家庭备忘录信息】：
 {memo_str}
+
+【家庭日历与日程安排】：
+{cal_str}
 
 【核心输出规则与格式要求】：
 1. 丰富排版规范：全力拥抱 Markdown 语法！你可以自由使用粗体、斜体、无序列表（-）、有序列表及表格来美化结构。

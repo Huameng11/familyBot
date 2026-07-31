@@ -287,6 +287,10 @@ textarea {
 .storage-item-theme .badge-main { background: #fff3e0; color: #e65100; }
 .storage-item-theme .badge-sub { background: #efebe9; color: #4e342e; }
 
+/* 3. 家庭日历色彩（天空青色系） */
+.calendar-item-theme .badge-main { background: #e0f7fa; color: #00838f; }
+.calendar-item-theme .badge-sub { background: #e0f2f1; color: #00695c; }
+
 /* ================= 底部导航栏 Tab ================= */
 .nav-bar { 
   position: fixed; 

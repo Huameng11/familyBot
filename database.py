@@ -46,6 +46,18 @@ def init_db():
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    # 4. 家庭日历日程表
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS calendars (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            event_date TEXT NOT NULL,
+            category TEXT DEFAULT '',
+            location TEXT DEFAULT '',
+            remind_time TEXT DEFAULT '',
+            remark TEXT DEFAULT ''
+        )
+    ''')
     conn.commit()
     conn.close()
 # 获取历史聊天记录（按时间正序排列，保证聊天流逻辑正确）
@@ -80,6 +92,15 @@ def get_db_memos():
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM memos ORDER BY id DESC") # 按时间倒序，最新的在上面
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+# 获取所有日历日程记录（按日期升序排列，方便时间线查看）
+def get_db_calendars():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM calendars ORDER BY event_date ASC")
     rows = cursor.fetchall()
     conn.close()
     return rows
