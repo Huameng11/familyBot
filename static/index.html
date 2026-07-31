@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>FamilyBot 家庭管家</title>
-  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/style.css?v=4">
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -35,10 +35,10 @@
 </div>
 
 <script type="module">
-  import ChatTab from './components/ChatTab.js';
-  import MedicineTab from './components/MedicineTab.js';
-  import StorageTab from './components/StorageTab.js';
-  import MoreTab from './components/MoreTab.js';
+  import ChatTab from './components/ChatTab.js?v=4';
+  import MedicineTab from './components/MedicineTab.js?v=4';
+  import StorageTab from './components/StorageTab.js?v=4';
+  import MoreTab from './components/MoreTab.js?v=4';
 
   const { createApp } = Vue;
   createApp({
