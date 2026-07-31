@@ -1,19 +1,31 @@
+// 🚀 1. 顶部引入公共批量导入外壳组件
+import BatchImport from './BatchImport.js'; 
+
 export default {
   name: 'MemoTab',
+  // 🚀 2. 局部注册组件
+  components: { BatchImport }, 
   template: `
     <div class="content-section manager-padding">
-      <div class="card">
-        <h3>➕ 新增备忘条目</h3>
+      
+      <batch-import 
+        title="➕ 新增备忘条目"
+        api-route="/api/batch_add_memo"
+        ai-prompt="帮我生成3条家庭琐事、核心账号或日常缴费备忘的JSON数组"
+        example-format='[{"title":"燃气缴费户号","content":"- 户号：\`12345678\`\\n- 户名：张三\\n- 提示：每月\`10号\`前缴费有优惠..."}]'
+        btn-color="#9C27B0"
+        @success="fetchList"
+      >
         <div class="form-group">
           <label>备忘主题 / 问题 *</label>
           <input type="text" v-model="newMemo.title" class="form-control" placeholder="如：燃气缴费户号、宽带密码">
         </div>
         <div class="form-group">
           <label>详细记录内容 (支持 MD 排版)</label>
-          <textarea v-model="newMemo.content" rows="3" class="form-control" placeholder="如：\n- 户号：12345678\n- 户名：张三..."></textarea>
+          <textarea v-model="newMemo.content" rows="3" class="form-control" placeholder="如：\\n- 户号：12345678\\n- 提示：每月使用微信缴费..."></textarea>
         </div>
         <button class="btn" style="width:100%; background:#9C27B0;" @click="addMemo">保存到备忘录</button>
-      </div>
+      </batch-import>
 
       <div class="card">
         <h3>📋 备忘历史记录 (共: {{ filteredMemoList.length }} 条)</h3>
@@ -91,17 +103,20 @@ export default {
     toggleExpand(item) {
       item.isExpanded = !item.isExpanded;
     },
+    // 🚀 带安全容错的全局 marked 语法编译器
     renderMarkdown(text) {
       if (!text || typeof text !== 'string') return '';
       try {
         if (typeof marked !== 'undefined' && marked.parse) {
           return marked.parse(text, { breaks: true, gfm: true });
         }
+        // 若 CDN 异常未成功加载，则以换行符替换作为兜底纯文本渲染，防止白屏
         return text.replace(/\n/g, '<br>');
       } catch (e) {
         return text.replace(/\n/g, '<br>');
       }
     },
+    // 快速格式化 SQLite 原生返回的 timestamp
     formatQueryDate(dateStr) {
       if (!dateStr) return '刚刚';
       return dateStr.split(' ')[0] || dateStr;
@@ -110,6 +125,7 @@ export default {
       const res = await fetch('/api/memos');
       const data = await res.json();
       if (data.status === 'success') {
+        // 数据拉取后，动态映射注入响应式折叠状态与独立编辑状态控制
         this.memoList = data.data.map(item => ({ 
           ...item, 
           isExpanded: false,
@@ -119,9 +135,12 @@ export default {
     },
     async addMemo() {
       if (!this.newMemo.title) return alert('请输入主题描述');
+      
+      // 使用 URLSearchParams 对包含特殊 MD 符号的提交参数执行安全流转义
       const u = new URLSearchParams();
       u.append('title', this.newMemo.title);
       u.append('content', this.newMemo.content || '');
+
       await fetch(`/api/add_memo?${u.toString()}`, { method: 'POST' });
       alert('🎉 备忘录入成功');
       this.newMemo = { title: '', content: '' };
@@ -132,7 +151,9 @@ export default {
       u.append('id', memo.id);
       u.append('title', memo.title);
       u.append('content', memo.content || '');
+
       await fetch(`/api/update_memo?${u.toString()}`, { method: 'POST' });
+      // 保存修改后，自动拨回预览开关，展示清爽排版
       memo.isEditing = false;
       alert('✅ 修改已成功保存！');
       this.fetchList();

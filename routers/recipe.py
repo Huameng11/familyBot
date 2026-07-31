@@ -1,9 +1,19 @@
 from fastapi import APIRouter, HTTPException
+from typing import List
 import sqlite3
+from pydantic import BaseModel
 from config import DB_PATH
 from database import get_db_recipes
 
 router = APIRouter(tags=["Recipe"])
+
+class RecipeItem(BaseModel):
+    name: str
+    category: str = ""
+    ingredients: str = ""
+    difficulty: str = ""
+    steps: str = ""
+    tutorial_link: str = ""
 
 @router.get("/api/recipes")
 async def get_all_recipes():
@@ -47,5 +57,21 @@ async def delete_recipe(id: int):
         conn.commit()
         conn.close()
         return {"status": "success", "message": "菜谱删除成功"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 🚀 批量导入路由
+@router.post("/api/batch_add_recipe")
+async def batch_add_recipe(items: List[RecipeItem]):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.executemany(
+            "INSERT INTO recipes (name, category, ingredients, difficulty, steps, tutorial_link) VALUES (?, ?, ?, ?, ?, ?)",
+            [(item.name, item.category, item.ingredients, item.difficulty, item.steps, item.tutorial_link) for item in items]
+        )
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": f"成功批量导入 {len(items)} 条菜谱记录"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

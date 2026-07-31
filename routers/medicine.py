@@ -1,9 +1,18 @@
 from fastapi import APIRouter, HTTPException
+from typing import List
 import sqlite3
+from pydantic import BaseModel
 from config import DB_PATH
 from database import get_db_medicines
 
 router = APIRouter(tags=["Medicine"])
+
+class MedicineItem(BaseModel):
+    name: str
+    count: str = ""
+    location: str = ""
+    expire_date: str = ""
+    usage: str = ""
 
 @router.get("/api/medicines")
 async def get_all_medicines():
@@ -21,7 +30,7 @@ async def add_medicine(name: str, count: str = "", location: str = "", expire_da
                        (name, count, location, expire_date, usage))
         conn.commit()
         conn.close()
-        return {"status": "success", "message": "药品录入成功"}
+        return {"status": "success", "message": "药品添加成功"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -37,6 +46,7 @@ async def update_medicine(id: int, name: str, count: str = "", location: str = "
         return {"status": "success", "message": "药品更新成功"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/api/delete_medicine")
 async def delete_medicine(id: int):
     try:
@@ -46,5 +56,21 @@ async def delete_medicine(id: int):
         conn.commit()
         conn.close()
         return {"status": "success", "message": "药品删除成功"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 🚀 批量导入路由
+@router.post("/api/batch_add_medicine")
+async def batch_add_medicine(items: List[MedicineItem]):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.executemany(
+            "INSERT INTO medicines (name, count, location, expire_date, usage) VALUES (?, ?, ?, ?, ?)",
+            [(item.name, item.count, item.location, item.expire_date, item.usage) for item in items]
+        )
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": f"成功批量导入 {len(items)} 条药品记录"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
