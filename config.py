@@ -14,3 +14,14 @@ AGNES_BASE_URL = os.getenv("AGNES_BASE_URL", "https://apihub.agnes-ai.com/v1")
 DB_PATH = os.getenv("FAMILYBOT_DB_PATH", "medicine.db")
 #企业微信推送地址
 WECHAT_WEBHOOK_URL = os.getenv("FAMILYBOT_WECHAT_WEBHOOK_URL", "xxxxxx")
+
+# 读取早报时间字符串，如果没有配置，则默认 07:30
+report_times_str = os.getenv("MORNING_REPORT_TIMES", "07:30")
+
+# 将 "08:00,09:00,10:00" 解析为干净的列表 [['08', '00'], ['09', '00'], ['10', '00']]
+MORNING_REPORT_TIMES = []
+for t in report_times_str.split(","):
+    t = t.strip()
+    if ":" in t:
+        hour, minute = t.split(":")
+        MORNING_REPORT_TIMES.append((hour.zfill(2), minute.zfill(2)))

@@ -3,36 +3,47 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import config 
 
 # 🚀 1. 导入底层依赖、初始化函数与定时早报核心服务
 from database import init_db
 from routers import chat, medicine, storage, memo, ocr, calendar, recipe
 from services.notifier import run_daily_morning_job
 
-# 🚀 2. 实例化异步定时任务调度器
+# 🚀 实例化异步定时任务调度器
 scheduler = AsyncIOScheduler()
 
-# 🚀 3. 定义现代化 Lifespan 生命周期管理（无缝嵌入定时器）
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # ------------------ 【服务启动阶段】 ------------------
-    # 自动运行数据库初始化 (保留你原本的逻辑)
+    # 1. 初始化数据库
     init_db()
     
-    # 注册定时任务：每天早上 07:30 准时巡检并发送企业微信群早报
-    scheduler.add_job(
-        run_daily_morning_job, 
-        'cron', 
-        hour=7, 
-        minute=30, 
-        id='daily_morning_job',
-        replace_existing=True
-    )
+    # 2. 动态注册多个早报定时任务
+    print("⏰ [System] 开始注册定时早报任务...")
     
-    # 启动调度引擎
+    # 防止热重载时重复挂载任务
+    scheduler.remove_all_jobs()
+    
+    for index, (hour, minute) in enumerate(config.MORNING_REPORT_TIMES):
+        job_id = f"daily_morning_job_{hour}_{minute}"
+        scheduler.add_job(
+            run_daily_morning_job, 
+            'cron', 
+            hour=int(hour), 
+            minute=int(minute), 
+            timezone='Asia/Shanghai',  # 🚀 强制指定国内北京时间时区
+            id=job_id,
+            replace_existing=True
+        )
+        print(f"  └─ 已成功挂载早报任务: {hour}:{minute} (ID: {job_id})")
+    
+    # 3. 启动调度引擎
     scheduler.start()
-    print("🚀 [System] APScheduler 定时巡检引擎启动成功！(每天 07:30 自动分发早报)")
+    print("🚀 [System] APScheduler 定时巡检引擎启动成功！")
     
+    # 👇 打印当前任务列表，方便 docker logs 检查
+    scheduler.print_jobs()
     yield  # 🟢 系统保持挂起，正常处理局域网请求...
     
     # ------------------ 【服务关闭阶段】 ------------------

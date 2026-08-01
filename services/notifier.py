@@ -94,10 +94,10 @@ def inspect_family_data():
     return "\n\n".join(raw_info) if raw_info else "今日家庭各项数据库运行一切正常，暂无特殊紧急预警。"
 
 
-# 2. 调用大模型生成早报
+# 2. 调用大模型生成汇报
 async def generate_morning_report(raw_data_str: str) -> str:
     system_prompt = """你是一位贴心、优雅、富有责任感的智能家庭大管家（FamilyBot）。
-请根据系统为你提取的今日家庭巡检原始数据，为主人撰写一份简短、温馨的“每日早报”。
+请根据系统为你提取的今日家庭巡检原始数据，为主人撰写一份简短、温馨的“每日汇报”。
 
 【企业微信排版技术规范】：
 1. 必须使用标准 Markdown。请多分段，善用无序列表符号（•）。
@@ -109,7 +109,7 @@ async def generate_morning_report(raw_data_str: str) -> str:
 2. 如果有存量为0的药品或已过期药品，请清晰提醒主人及时采购补充。
 3. 结尾附带一句暖心的晨间问候。"""
 
-    user_prompt = f"这是今天的家庭巡检原始数据：\n{raw_data_str}\n\n请为主人生成今天的每日早报："
+    user_prompt = f"这是今天的家庭巡检原始数据：\n{raw_data_str}\n\n请为主人生成今天的每日汇报："
 
     try:
         response = await client.chat.completions.create(
@@ -127,7 +127,7 @@ async def generate_morning_report(raw_data_str: str) -> str:
 
 # 3. 针对小爱同学/语音播报的文本清洗并写入 data/msg.txt 函数
 def save_clean_msg_for_tts(text: str):
-    cleaned = re.sub(r'^.*?(早上好|早安|每日早报|早报|为您带来|为您生成).*?[：:\n\s]*', '', text, flags=re.DOTALL)
+    cleaned = re.sub(r'^.*?(早上好|早安|每日汇报|汇报|为您带来|为您生成).*?[：:\n\s]*', '', text, flags=re.DOTALL)
     cleaned = re.sub(r'<font color=.*?>', '', cleaned)
     cleaned = re.sub(r'</font>', '', cleaned)
     cleaned = cleaned.replace('**', '').replace('`', '').replace('#', '')
@@ -165,7 +165,7 @@ async def push_to_wechat_webhook(markdown_content: str):
             res = await async_client.post(WECHAT_WEBHOOK_URL, json=payload, timeout=10.0)
             result = res.json()
             if result.get("errcode") == 0:
-                print("✅ 企业微信群机器人早报推送成功！")
+                print("✅ 企业微信群机器人汇报推送成功！")
             else:
                 print(f"❌ 企业微信推送失败: {result.get('errmsg')}")
         except Exception as e:
@@ -180,14 +180,14 @@ def inject_to_web_chat(report_text: str):
         cursor.execute("INSERT INTO chat_history (role, text) VALUES (?, ?)", ("bot", report_text))
         conn.commit()
         conn.close()
-        print("✅ 每日早报已同步更新至网页端聊天框历史中。")
+        print("✅ 每日汇报已同步更新至网页端聊天框历史中。")
     except Exception as e:
         print(f"❌ 存入聊天历史失败: {str(e)}")
 
 
 # 6. 🚀 强力升级：调度任务总执行入口（加入全局捕获，杜绝 500 盲区）
 async def run_daily_morning_job():
-    print("⏰ [定时任务启动] 开始巡检家庭数据库并生成早报...")
+    print("⏰ [定时任务启动] 开始巡检家庭数据库并生成汇报...")
     try:
         # 1. 巡检提取原始数据
         raw_data = inspect_family_data()
@@ -204,7 +204,7 @@ async def run_daily_morning_job():
         # 5. 渠道 C：清洗文本并保存到 data/msg.txt
         save_clean_msg_for_tts(report_md)
         
-        print("🎉 [定时任务结束] 早报全渠道下发完毕！")
+        print("🎉 [定时任务结束] 汇报全渠道下发完毕！")
     except Exception as e:
         # 🚀 抓取核心崩溃堆栈并在终端打印，方便直接针对行数破案
         import traceback
